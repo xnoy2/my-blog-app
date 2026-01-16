@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,41 +10,46 @@ type Blog = {
   created_at: string;
 };
 
-export default function Dashboard() {
+const Dashboard: React.FC = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const limit = 3; // blogs view per page i set 3 for userF Interface
+  const limit = 3; // blogs per page
 
   // Fetch blogs with pagination
   const fetchBlogs = async () => {
     setLoading(true);
-    const from = (page - 1) * limit;
-    const to = page * limit - 1;
+    try {
+      const from = (page - 1) * limit;
+      const to = page * limit - 1;
 
-    const { data, error } = await supabase
-      .from('blogs')
-      .select('*')
-      .range(from, to)
-      .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('blogs')
+        .select('*')
+        .range(from, to)
+        .order('created_at', { ascending: false });
 
-    if (error) alert(error.message);
-    else setBlogs(data);
-
-    setLoading(false);
+      if (error) throw error;
+      setBlogs(data || []);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Delete a blog
   const handleDelete = async (id: string) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this blog?');
-    if (!confirmDelete) return;
+    if (!window.confirm('Are you sure you want to delete this blog?')) return;
 
-    const { error } = await supabase.from('blogs').delete().eq('id', id);
-    if (error) alert(error.message);
-    else {
+    try {
+      const { error } = await supabase.from('blogs').delete().eq('id', id);
+      if (error) throw error;
       alert('Blog deleted!');
-      fetchBlogs(); // refresh list after deletion
+      fetchBlogs(); // refresh after deletion
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
@@ -56,6 +61,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchBlogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   return (
@@ -111,4 +117,6 @@ export default function Dashboard() {
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;

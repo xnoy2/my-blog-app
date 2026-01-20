@@ -15,7 +15,7 @@ const Dashboard: React.FC = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const limit = 3; // blogs per page
+  const limit = 3; // blogs per page sitted to 3
 
   // Fetch blogs with pagination
   const fetchBlogs = async () => {

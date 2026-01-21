@@ -50,3 +50,8 @@ export const getCurrentUser = async () => {
 //git branch -M main
 //git remote add origin https://github.com/xnoy2/my-blog-app.git
 //git push -u origin main
+
+//Commit all changes in github
+//git add .
+//git commit -m "Fix ESLint warnings for Vercel deployment"
+//git push origin main

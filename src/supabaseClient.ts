@@ -42,3 +42,11 @@ export const getCurrentUser = async () => {
   const { data } = await supabase.auth.getUser();
   return data.user;
 };
+
+
+//git init
+//git add README.md
+//git commit -m "first commit"
+//git branch -M main
+//git remote add origin https://github.com/xnoy2/my-blog-app.git
+//git push -u origin main

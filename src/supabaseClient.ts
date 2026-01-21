@@ -1,21 +1,44 @@
 // src/supabaseClient.ts
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://tyxoqilietltbpwcswhk.supabase.co'; //supabase DataAPI URL
-// supabase Legacy Anon public key 
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5eG9xaWxpZXRsdGJwd2Nzd2hrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NDE5NTgsImV4cCI6MjA4NDExNzk1OH0.GAUs81AvLgZ8FBeoWjAMmCZerrvz2dNHUPAgzqxBxms';
+// Load URL and anon key from .env
+const supabaseUrl: string = process.env.REACT_APP_SUPABASE_URL!;
+const supabaseAnonKey: string = process.env.REACT_APP_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+console.log('Supabase URL:', supabaseUrl);
+console.log('Supabase Key:', supabaseAnonKey);
 
-// export{} line core ensuring TS treats this file as a module
-export {};
+// Initialize Supabase client
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
-// Update Existing code in Github
+/**
+ * Upload a file to a Supabase Storage bucket
+ * @param file - File object from input
+ * @param bucket - Name of storage bucket (must match exactly in Supabase)
+ * @returns public URL of uploaded file
+ */
+export const uploadFile = async (file: File, bucket: string): Promise<string> => {
+  try {
+    const fileName = `${Date.now()}-${file.name}`;
 
-// Open project folder - cd "C:\Users\Admin\Desktop\Junior Dev Assessment"
-// Check changed files - git status
-// Add the updated files - git add .
-// Commit the changes - git commit -m "Fix register page and Supabase auth"
-// Push to GitHub - git push origin main
+    // Upload file
+    const { data, error } = await supabase.storage.from(bucket).upload(fileName, file);
+    if (error) throw error;
 
+    // Get public URL
+    const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(fileName);
+    return publicData.publicUrl;
+  } catch (err) {
+    console.error('Error uploading file:', err);
+    throw err;
+  }
+};
 
+/**
+ * Get the current authenticated user
+ * @returns user object or null
+ */
+export const getCurrentUser = async () => {
+  const { data } = await supabase.auth.getUser();
+  return data.user;
+};

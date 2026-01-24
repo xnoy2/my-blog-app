@@ -1,3 +1,4 @@
+//It controls how blog data is stored, updated, and accessed across the entire app.
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 // Type for a single blog post

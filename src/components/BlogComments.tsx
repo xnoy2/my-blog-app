@@ -1,152 +1,209 @@
 // src/components/BlogComments.tsx
+import React, { useEffect, useState } from 'react';
+import { supabase, uploadFile } from '../supabaseClient';
 
-// Import React hooks for state and lifecycle handling
-import React, { useState, useEffect } from 'react';
-
-// Import Supabase client and helper functions
-import { supabase, uploadFile, getCurrentUser } from '../supabaseClient';
-
-// Props interface: we need the blog ID to know which comments to load
 interface BlogCommentsProps {
   blogId: string;
 }
 
+type Comment = {
+  id: string;
+  blog_id: string;
+  author: string;
+  content: string;
+  image_url: string | null;
+  created_at: string;
+};
+
 const BlogComments: React.FC<BlogCommentsProps> = ({ blogId }) => {
-  // Store all comments for this blog
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Store text input for new comment
+  // New comment
   const [commentText, setCommentText] = useState('');
-
-  // Store selected image file (optional)
   const [file, setFile] = useState<File | null>(null);
-
-  // Store image preview URL before uploading
   const [preview, setPreview] = useState<string | null>(null);
 
-  // Fetch all comments related to this blog from Supabase
+  // Edit comment
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
+
+  /* =========================
+     GET CURRENT USER
+  ========================== */
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+  }, []);
+
+  /* =========================
+     FETCH COMMENT
+  ========================== */
   const fetchComments = async () => {
     const { data, error } = await supabase
       .from('comments')
       .select('*')
-      .eq('blog_id', blogId) // only comments for this blog
-      .order('created_at', { ascending: true }); // oldest first
+      .eq('blog_id', blogId)
+      .order('created_at', { ascending: true });
 
-    if (error) {
-      console.error(error);
-    } else {
-      setComments(data || []);
-    }
+    if (!error) setComments(data || []);
   };
 
-  // Run fetchComments when the component loads or when blogId changes
   useEffect(() => {
     fetchComments();
   }, [blogId]);
 
-  // Handle file selection and generate preview image
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]); // save file
-      setPreview(URL.createObjectURL(e.target.files[0])); // show preview
-    }
+  /* =========================
+     CREATE COMMENT
+  ========================== */
+  const handlePostComment = async () => {
+    if (!commentText || !userId) return alert('Comment required');
+
+    let imageUrl: string | null = null;
+    if (file) imageUrl = await uploadFile(file, 'blog-images');
+
+    const { error } = await supabase.from('comments').insert({
+      blog_id: blogId,
+      author: userId,
+      content: commentText,
+      image_url: imageUrl,
+    });
+
+    if (error) return alert(error.message);
+
+    setCommentText('');
+    setFile(null);
+    setPreview(null);
+    fetchComments();
   };
 
-  // Handle posting a new comment
-  const handlePostComment = async () => {
-    // Prevent empty comments
-    if (!commentText) return alert('Comment cannot be empty.');
+  /* =========================
+     START EDIT
+  ========================== */
+  const startEdit = (c: Comment) => {
+    setEditingId(c.id);
+    setEditText(c.content);
+    setEditFile(null);
+    setRemoveImage(false);
+  };
 
-    try {
-      // Get currently logged-in user
-      const user = await getCurrentUser();
-      if (!user) throw new Error('User not authenticated');
+  /* =========================
+     UPDATE COMMENT
+  ========================== */
+  const handleUpdate = async (comment: Comment) => {
+    let imageUrl = comment.image_url;
 
-      let imageUrl: string | null = null;
+    // Remove image checkbox
+    if (removeImage) imageUrl = null;
 
-      // Upload image if user selected one
-      if (file) {
-        imageUrl = await uploadFile(file, 'blog-images');
-      }
-
-      // Insert comment into Supabase database
-      const { error } = await supabase.from('comments').insert([
-        {
-          blog_id: blogId,
-          author: user.id,        // link comment to author
-          content: commentText,   // comment text
-          image_url: imageUrl,    // optional image
-        },
-      ]);
-
-      if (error) throw error;
-
-      // Reset form after successful post
-      setCommentText('');
-      setFile(null);
-      setPreview(null);
-
-      // Reload comments so the new one appears immediately
-      fetchComments();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message);
+    // Upload new image
+    if (editFile) {
+      imageUrl = await uploadFile(editFile, 'blog-images');
     }
+
+    const { error } = await supabase
+      .from('comments')
+      .update({
+        content: editText,
+        image_url: imageUrl,
+      })
+      .eq('id', comment.id);
+
+    if (error) return alert(error.message);
+
+    setEditingId(null);
+    setEditText('');
+    setEditFile(null);
+    setRemoveImage(false);
+    fetchComments();
+  };
+
+  /* =========================
+     DELETE COMMENT
+  ========================== */
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this comment?')) return;
+
+    const { error } = await supabase.from('comments').delete().eq('id', id);
+    if (error) return alert(error.message);
+
+    fetchComments();
   };
 
   return (
-    <div style={{ marginTop: '20px', borderTop: '1px solid #ccc', paddingTop: '10px' }}>
+    <div style={{ marginTop: 20 }}>
       <h4>Comments</h4>
 
-      {/* Display comments list */}
-      {comments.length === 0 ? (
-        <p>No comments yet.</p>
-      ) : (
-        comments.map((c) => (
-          <div key={c.id} style={{ marginBottom: '10px' }}>
-            <p>{c.content}</p>
-
-            {/* Show image if comment has one */}
-            {c.image_url && (
-              <img
-                src={c.image_url}
-                alt="Comment"
-                style={{ maxWidth: '50px' }}
+      {comments.map((c) => (
+        <div key={c.id} style={{ borderBottom: '1px solid #ddd', marginBottom: 10 }}>
+          {editingId === c.id ? (
+            <>
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                style={{ width: '100%' }}
               />
-            )}
-            <br />
-            <small>By: {c.author}</small>
-            <p>_____________________________________________________________</p>
-          </div>
-        ))
-      )}
 
-      {/* Comment input form */}
+              {c.image_url && (
+                <>
+                  <img src={c.image_url} alt="" style={{ maxWidth: 100 }} />
+                  <br />
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={removeImage}
+                      onChange={(e) => setRemoveImage(e.target.checked)}
+                    />{' '}
+                    Remove image
+                  </label>
+                </>
+              )}
+
+              <input type="file" onChange={(e) => setEditFile(e.target.files?.[0] || null)} />
+
+              <br />
+              <button onClick={() => handleUpdate(c)}>Update</button>
+              <button onClick={() => setEditingId(null)}>Cancel</button>
+            </>
+          ) : (
+            <>
+              <p>{c.content}</p>
+
+              {c.image_url && <img src={c.image_url} alt="" style={{ maxWidth: 80 }} />}
+
+              <br />
+              <small>Author: {c.author}</small>
+
+              {c.author === userId && (
+                <>
+                  <br />
+                  <button onClick={() => startEdit(c)}>Edit</button>
+                  <button onClick={() => handleDelete(c.id)}>Delete</button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      ))}
+
       <textarea
         placeholder="Write a comment..."
         value={commentText}
         onChange={(e) => setCommentText(e.target.value)}
-        style={{ display: 'block', width: '100%', padding: '8px', marginBottom: '10px' }}
+        style={{ width: '100%' }}
       />
 
-      {/* Image upload input */}
-      <input type="file" onChange={handleFileChange} style={{ marginBottom: '10px' }} />
+      <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
 
-      {/* Image preview before upload */}
-      {preview && (
-        <img
-          src={preview}
-          alt="Preview"
-          style={{ maxWidth: '200px', marginBottom: '10px', border: '1px solid #ccc' }}
-        />
-      )}
+      {preview && <img src={preview} alt="preview" style={{ maxWidth: 100 }} />}
 
-      {/* Submit comment */}
-      <button onClick={handlePostComment} style={{ padding: '6px 12px' }}>
-        Post Comment
-      </button>
+      <br />
+      <button onClick={handlePostComment}>Post Comment</button>
     </div>
   );
 };
-// To use to the other file
+
 export default BlogComments;

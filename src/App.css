@@ -1,38 +1,274 @@
-.App {
-  text-align: center;
+/* =========================
+   GLOBAL RESET & BASE
+========================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f6f8;
+  color: #333;
+  line-height: 1.6;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+a {
+  text-decoration: none;
+  color: inherit;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+/* =========================
+   LAYOUT
+========================= */
+.page-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+.page-container1 {
+  max-width: 550px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* =========================
+   HEADINGS
+========================= */
+.page-title {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+.muted-text {
+  color: #777;
+  font-size: 14px;
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+.dashboard-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #ddd;
+}
+
+.welcome-text {
+  margin-bottom: 12px;
+}
+
+.empty-text {
+  text-align: center;
+  color: #777;
+}
+
+/* =========================
+   BLOG CARD
+========================= */
+.blog-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.blog-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.blog-content {
+  margin: 10px 0 15px;
+}
+
+.blog-image {
+  width: 100%;
+  max-height: 350px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.blog-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 5px; /* 👈 space between Edit and Delete */
+  margin-top: 10px;
+}
+
+/* =========================
+   FORMS (CREATE / EDIT / AUTH)
+========================= */
+.form-label {
+  display: block;
+  margin: 12px 0 6px;
+  font-weight: 500;
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.large-textarea {
+  min-height: 200px;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+/* =========================
+   IMAGE
+========================= */
+.image-preview {
+  max-width: 100%;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+.image-preview1 {
+  max-width: 10%;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary-btn {
+  background: #2563eb;
+  color: #fff;
+}
+
+.secondary-btn {
+  background: #e5e7eb;
+  color: #333;
+}
+.secondary-btn1 {
+  background: #e5e7eb;
+  color: #333;
+  font-size: 9px;
+}
+.edit-btn {
+  background: #2563eb;
+  color: #fff;
+}
+.edit-btn1 {
+  background: #2563eb;
+  color: #fff;
+  font-size: 9px;
+}
+.delete-btn {
+  background: #dc2626;
+  color: #fff;
+}
+
+.remove-btn {
+  background: #dc2626;
+  color: #fff;
+  margin-top: 6px;
+}
+
+.form-button {
+  margin-top: 20px;
+  background: #2563eb;
+  color: #fff;
+  width: 100%;
+}
+.form-button1 {
+  margin-top: 20px;
+  background: #2563eb;
+  color: #fff;
+  width: 20%;
+}
+/* =========================
+   BLOG EDITOR
+========================= */
+.blog-editor {
+  max-width: 800px;
+}
+
+.editor-header {
+  margin-bottom: 20px;
+}
+
+.editor-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;
+}
+
+/* =========================
+   COMMENTS
+========================= */
+.comment-box {
+  margin-top: 15px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.comment-actions {
+  margin-top: 6px;
+}
+
+.comment-actions button {
+  margin-right: 6px;
+}
+
+/* =========================
+   PAGINATION
+========================= */
+.pagination {
+  display: flex;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  align-items: center;
+  margin-top: 20px;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.pagination button {
+  margin: 0 5px;
 }

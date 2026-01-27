@@ -1,88 +1,74 @@
 // src/pages/Register.tsx
-
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient'; // Supabase client for auth
-import { useNavigate, Link } from 'react-router-dom'; // Navigation and linking
+import { supabase } from '../supabaseClient';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Register: React.FC = () => {
-  // Store user input
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // Loading state to prevent multiple submissions
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
-  // Function to handle user registration
   const handleRegister = async () => {
-    // Frontend validation: require email and password
     if (!email || !password) {
       alert('Email and password are required');
       return;
     }
 
-    setLoading(true); // Show loading indicator
+    setLoading(true);
 
     try {
-      // Call Supabase to sign up the user
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
+      const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
 
-      // Check if user object is returned before showing alert
       if (data.user) {
         alert('Registered account successfully!');
-        navigate('/login'); // Redirect to login page
+        navigate('/login');
       } else {
         alert('Check your email to confirm registration.');
       }
     } catch (err: any) {
-      // Show error message if signup fails
       alert(err.message);
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto' }}>
-      <h2>Register</h2>
+    <div className="page-container1">
+      <div className="card">
+        <h2 className="page-title" style={{textAlign: 'center'}}>Register</h2>
 
-      {/* Email input field */}
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        style={{ display: 'block', marginBottom: '10px', width: '100%', padding: '8px' }}
-      />
+        <label className="form-label">Email</label>
+        <input
+          type="email"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="form-input"
+        />
 
-      {/* Password input field */}
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={{ display: 'block', marginBottom: '10px', width: '100%', padding: '8px' }}
-      />
+        <label className="form-label">Password</label>
+        <input
+          type="password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="form-input"
+        />
 
-      {/* Register button */}
-      <button
-        onClick={handleRegister}
-        disabled={loading} // Prevent multiple clicks
-        style={{ padding: '10px 20px', marginBottom: '10px' }}
-      >
-        {loading ? 'Registering...' : 'Register'}
-      </button>
+        <button
+          onClick={handleRegister}
+          disabled={loading}
+          className="form-button1"
+        >
+          {loading ? 'Registering...' : 'Register'}
+        </button>
 
-      {/* Link to Login page */}
-      <p>
-        Already have an account? <Link to="/login">Login here</Link>
-      </p>
+        <p className="muted-text" style={{ marginTop: '12px' }}>
+          Already have an account? <Link to="/login"><u>Login here</u></Link>
+        </p>
+      </div>
     </div>
   );
 };

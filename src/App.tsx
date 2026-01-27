@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import CreateBlog from './pages/CreateBlog';
 import EditBlog from './pages/EditBlog';
+import './App.css';
 
 const App: React.FC = () => {
   return (

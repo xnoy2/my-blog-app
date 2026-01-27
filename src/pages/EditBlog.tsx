@@ -1,12 +1,10 @@
 // src/pages/EditBlog.tsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase, uploadFile } from '../supabaseClient';
 
 const EditBlog: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -15,10 +13,9 @@ const EditBlog: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // 🔹 Fetch blog
+  // Fetch blog
   const fetchBlog = async () => {
     if (!id) return;
-
     const { data, error } = await supabase
       .from('blogs')
       .select('*')
@@ -36,37 +33,21 @@ const EditBlog: React.FC = () => {
     fetchBlog();
   }, [id]);
 
-  // 🗑 REMOVE IMAGE (Storage + DB)
+  // Remove image
   const handleRemoveImage = async () => {
     if (!currentImage || !id) return;
-
-    const confirm = window.confirm('Remove current image?');
-    if (!confirm) return;
+    if (!window.confirm('Remove current image?')) return;
 
     try {
       setLoading(true);
-
-      // Extract file name from URL
       const fileName = currentImage.split('/').pop();
       if (!fileName) throw new Error('Invalid image path');
 
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('blog-images')
-        .remove([fileName]);
-
-      if (storageError) throw storageError;
-
-      // Update DB
-      const { error: dbError } = await supabase
-        .from('blogs')
-        .update({ image_url: null })
-        .eq('id', id);
-
-      if (dbError) throw dbError;
+      await supabase.storage.from('blog-images').remove([fileName]);
+      await supabase.from('blogs').update({ image_url: null }).eq('id', id);
 
       setCurrentImage(null);
-      alert('Image removed successfully');
+      alert('Image removed');
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -74,34 +55,26 @@ const EditBlog: React.FC = () => {
     }
   };
 
-  // 💾 Update blog
+  // Update blog
   const handleUpdateBlog = async () => {
     if (!title || !content) {
       return alert('Title and content are required');
     }
 
     setLoading(true);
-
     try {
       let imageUrl = currentImage;
 
-      // Upload new image if selected
       if (file) {
         imageUrl = await uploadFile(file, 'blog-images');
       }
 
-      const { error } = await supabase
+      await supabase
         .from('blogs')
-        .update({
-          title,
-          content,
-          image_url: imageUrl,
-        })
+        .update({ title, content, image_url: imageUrl })
         .eq('id', id);
 
-      if (error) throw error;
-
-      alert('Blog updated successfully!');
+      alert('Blog updated successfully');
       navigate('/dashboard');
     } catch (err: any) {
       alert(err.message);
@@ -111,54 +84,78 @@ const EditBlog: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '500px', margin: '50px auto' }}>
-      <h2>Edit Blog</h2>
+    <div className="page-container">
+      <div className="card blog-editor" style={{ position: 'relative' }}>
+        {/* Top-right X button */}
+        <button
+          onClick={() => navigate('/dashboard')}
+          style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            background: 'transparent',
+            border: 'none',
+            fontSize: '20px',
+            cursor: 'pointer',
+          }}
+          aria-label="Close"
+        >
+          ✖
+        </button>
 
-      <input
-        placeholder="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
-      />
+        {/* Header */}
+        <div className="editor-header">
+          <h2>✏️ Edit Blog</h2>
+          <p className="muted-text">Update your content and keep your post fresh</p>
+        </div>
 
-      <textarea
-        placeholder="Content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
-      />
+        {/* Title */}
+        <label className="form-label">Blog Title</label>
+        <input
+          className="form-input"
+          placeholder="Enter blog title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-      {/* 🖼 CURRENT IMAGE */}
-      {currentImage && (
-        <div style={{ marginBottom: '10px' }}>
-          <p>Current Image:</p>
-          <img
-            src={currentImage}
-            alt="blog"
-            style={{ maxWidth: '200px', display: 'block', marginBottom: '5px' }}
-          />
+        {/* Content */}
+        <label className="form-label">Content</label>
+        <textarea
+          className="form-textarea large-textarea"
+          placeholder="Write your blog content here..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+        />
+
+        {/* Image Section */}
+        <div className="image-section">
+          {currentImage && (
+            <>
+              <p className="form-label">Current Image</p>
+              <img src={currentImage} alt="blog" className="image-preview" />
+              <div className="blog-actions">
+                <button className="delete-btn" onClick={handleRemoveImage} disabled={loading}>
+                  🗑️Remove Image
+                </button>
+              </div>
+            </>
+          )}
+
+          <label className="form-label">Upload New Image</label>
+          <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+        </div>
+
+        {/* Update Button */}
+        <div className="editor-actions">
           <button
-            onClick={handleRemoveImage}
+            className="primary-btn"
+            onClick={handleUpdateBlog}
             disabled={loading}
-            style={{ backgroundColor: '#d9534f', color: '#fff', padding: '5px 10px' }}
           >
-            Remove Image
+            {loading ? 'Updating...' : 'Update Blog'}
           </button>
         </div>
-      )}
-
-      <input
-        type="file"
-        onChange={(e) => setFile(e.target.files?.[0] || null)}
-      />
-
-      <button
-        onClick={handleUpdateBlog}
-        disabled={loading}
-        style={{ marginTop: '10px', padding: '10px 20px' }}
-      >
-        {loading ? 'Updating...' : 'Update Blog'}
-      </button>
+      </div>
     </div>
   );
 };

@@ -10,12 +10,9 @@ const CreateBlog: React.FC = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ ref to clear file input
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const navigate = useNavigate();
 
-  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -23,18 +20,12 @@ const CreateBlog: React.FC = () => {
     }
   };
 
-  // ✅ Remove selected image (FIXED)
   const handleRemoveImage = () => {
     setFile(null);
     setPreview(null);
-
-    // ✅ THIS clears the filename
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Handle blog submission
   const handleSubmit = async () => {
     if (!title || !content) {
       alert('Title and content are required.');
@@ -42,24 +33,15 @@ const CreateBlog: React.FC = () => {
     }
 
     setLoading(true);
-
     try {
       const user = await getCurrentUser();
       if (!user) throw new Error('User not authenticated');
 
       let imageUrl: string | null = null;
-
-      if (file) {
-        imageUrl = await uploadFile(file, 'blog-images');
-      }
+      if (file) imageUrl = await uploadFile(file, 'blog-images');
 
       const { error } = await supabase.from('blogs').insert([
-        {
-          title,
-          content,
-          author: user.id,
-          image_url: imageUrl,
-        },
+        { title, content, author: user.id, image_url: imageUrl },
       ]);
 
       if (error) throw error;
@@ -67,7 +49,6 @@ const CreateBlog: React.FC = () => {
       alert('Blog created successfully!');
       navigate('/dashboard');
     } catch (err: any) {
-      console.error(err);
       alert(err.message);
     } finally {
       setLoading(false);
@@ -75,64 +56,74 @@ const CreateBlog: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '50px auto' }}>
-      <h2>Create Blog</h2>
+    <div className="container">
+       <div className="card" style={{ position: 'relative' }}>
+        {/* X button on top-right */}
+        <button
+          onClick={() => navigate('/dashboard')}
+          style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            background: 'transparent',
+            border: 'none',
+            fontSize: '20px',
+            cursor: 'pointer',
+          }}
+          aria-label="Close"
+        >
+          ✖
+        </button>
+        <h2 className="page-title">✍️ Create New Blog</h2>
 
-      <input
-        type="text"
-        placeholder="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        style={{ display: 'block', width: '100%', padding: '8px', marginBottom: '10px' }}
-      />
+        <label className="form-label">Title</label>
+        <input
+          type="text"
+          placeholder="Enter blog title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="form-input"
+        />
 
-      <textarea
-        placeholder="Content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        style={{ display: 'block', width: '100%', padding: '8px', marginBottom: '10px' }}
-      />
+        <label className="form-label">Content</label>
+        <textarea
+          placeholder="Write your blog content here..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="form-textarea"
+        />
 
-      <input
-        type="file"
-        ref={fileInputRef} // ✅ important
-        onChange={handleFileChange}
-        style={{ marginBottom: '10px' }}
-      />
+        <label className="form-label">Image (optional)</label>
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="form-input"
+        />
 
-      {preview && (
-        <div style={{ marginBottom: '10px' }}>
-          <img
-            src={preview}
-            alt="Preview"
-            style={{ maxWidth: '100%', border: '1px solid #ccc', marginBottom: '5px' }}
-          />
-          <br />
+        {preview && (
+          <div className="image-preview-wrapper">
+            <img src={preview} alt="Preview" className="image-preview" />
+            <div className="btn-group">
+              <button onClick={handleRemoveImage} className="remove-btn">
+                Remove Image
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="btn-group">
           <button
-            onClick={handleRemoveImage}
-            style={{
-              padding: '4px 10px',
-              backgroundColor: '#f44336',
-              color: '#fff',
-              border: 'none',
-              cursor: 'pointer',
-            }}
+            onClick={handleSubmit}
+            disabled={loading}
+            className="form-button"
           >
-            Remove Image
+            {loading ? 'Posting...' : 'Publish Blog'}
           </button>
         </div>
-      )}
-
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        style={{ padding: '10px 20px' }}
-      >
-        {loading ? 'Posting...' : 'Post Blog'}
-      </button>
+      </div>
     </div>
   );
 };
+
 export default CreateBlog;
-
-
